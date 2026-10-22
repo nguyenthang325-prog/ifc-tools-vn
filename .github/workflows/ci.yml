@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cài đặt
+        run: python -m pip install .
+      - name: Import + trợ giúp từng lệnh
+        shell: bash
+        run: |
+          python -c "import ifc_tools_vn, ifc_tools_vn.server"
+          for m in eir_to_ids ids_run lod_checker ifc_qto audit_summary_report bim_audit_pipeline; do
+            PYTHONIOENCODING=utf-8 python -m ifc_tools_vn.checks.$m -h > /dev/null
+          done
+      - name: Tải mô hình mẫu Duplex (buildingSMART, CC BY 4.0) + kiểm SHA-256
+        shell: bash
+        run: |
+          curl -sSL -o Duplex_A_20110907.ifc "https://media.githubusercontent.com/media/buildingsmart-community/Community-Sample-Test-Files/main/IFC%202.3.0.1%20(IFC%202x3)/Duplex%20Apartment/Duplex_A_20110907.ifc"
+          echo "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed  Duplex_A_20110907.ifc" | sha256sum -c -
+      - name: Kiểm nhanh trên Duplex
+        shell: bash
+        env:
+          DUPLEX_PATH: Duplex_A_20110907.ifc
+          PYTHONIOENCODING: utf-8
+        run: python -m unittest discover tests -v
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

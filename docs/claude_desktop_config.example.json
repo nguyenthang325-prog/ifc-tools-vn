@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ifc-tools-vn": {
+      "command": "C:\\duong\\dan\\toi\\.venv\\Scripts\\ifc-tools-vn.exe",
+      "env": {
+        "IFC_TOOLS_OUTPUT": "C:\\duong\\dan\\luu\\ket_qua"
+      }
+    }
+  }
+}
