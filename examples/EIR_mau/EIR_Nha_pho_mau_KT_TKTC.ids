@@ -1,0 +1,191 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>EIR Nha pho mau — KT — TKTC</title>
+        <description>Sinh từ QĐ 347/QĐ-BXD. Thước đo chấm bằng máy theo chuẩn buildingSMART IDS.</description>
+        <date>2026-07-23</date>
+        <purpose>Đặc tả yêu cầu thông tin (EIR) — bộ môn KT, giai đoạn TKTC</purpose>
+    </info>
+    <specifications>
+        <specification name="EIR-PRJ-01 — IfcProject phải có Tên dự án" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-01" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCPROJECT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-02 — IfcBuilding phải có Tên công trình" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-02" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDING</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-03 — IfcSite phải có Tên địa điểm" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-03" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSITE</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-04 — Tầng (IfcBuildingStorey) phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-04" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-01 — Tường phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-01" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="IFCWALL" />
+                            <xs:enumeration value="IFCWALLSTANDARDCASE" />
+                        </xs:restriction>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-02 — Tường phải gán Vật liệu" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-02" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="IFCWALL" />
+                            <xs:enumeration value="IFCWALLSTANDARDCASE" />
+                        </xs:restriction>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-03 — Tường phải khai IsExternal (trong/ngoài)" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-03" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="IFCWALL" />
+                            <xs:enumeration value="IFCWALLSTANDARDCASE" />
+                        </xs:restriction>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WallCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-04 — Tường phải khai FireRating (chống cháy)" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-04" instructions="Yêu cầu áp dụng từ giai đoạn TKTC (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="IFCWALL" />
+                            <xs:enumeration value="IFCWALLSTANDARDCASE" />
+                        </xs:restriction>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WallCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireRating</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-05 — Cửa đi phải khai FireRating" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-05" instructions="Yêu cầu áp dụng từ giai đoạn TKTC (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDOOR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_DoorCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>FireRating</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="EIR-KT-06 — Cửa sổ phải khai IsExternal" ifcVersion="IFC2X3 IFC4" identifier="EIR-KT-06" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KT).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWINDOW</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_WindowCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

@@ -1,0 +1,139 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>EIR Nha pho mau — KC — TKKT</title>
+        <description>Sinh từ QĐ 347/QĐ-BXD. Thước đo chấm bằng máy theo chuẩn buildingSMART IDS.</description>
+        <date>2026-07-23</date>
+        <purpose>Đặc tả yêu cầu thông tin (EIR) — bộ môn KC, giai đoạn TKKT</purpose>
+    </info>
+    <specifications>
+        <specification name="EIR-PRJ-01 — IfcProject phải có Tên dự án" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-01" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCPROJECT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-02 — IfcBuilding phải có Tên công trình" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-02" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDING</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-03 — IfcSite phải có Tên địa điểm" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-03" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSITE</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-04 — Tầng (IfcBuildingStorey) phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-04" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-KC-01 — Dầm phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-KC-01" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KC).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBEAM</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-KC-02 — Dầm phải gán Vật liệu" ifcVersion="IFC2X3 IFC4" identifier="EIR-KC-02" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KC).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBEAM</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="EIR-KC-04 — Cột phải gán Vật liệu" ifcVersion="IFC2X3 IFC4" identifier="EIR-KC-04" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KC).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCCOLUMN</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="EIR-KC-06 — Sàn phải gán Vật liệu" ifcVersion="IFC2X3 IFC4" identifier="EIR-KC-06" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KC).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSLAB</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+        <specification name="EIR-KC-07 — Móng phải gán Vật liệu" ifcVersion="IFC2X3 IFC4" identifier="EIR-KC-07" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn KC).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCFOOTING</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" />
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

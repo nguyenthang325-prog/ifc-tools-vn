@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>EIR Nha pho mau — MEP — TKKT</title>
+        <description>Sinh từ QĐ 347/QĐ-BXD. Thước đo chấm bằng máy theo chuẩn buildingSMART IDS.</description>
+        <date>2026-07-23</date>
+        <purpose>Đặc tả yêu cầu thông tin (EIR) — bộ môn MEP, giai đoạn TKKT</purpose>
+    </info>
+    <specifications>
+        <specification name="EIR-PRJ-01 — IfcProject phải có Tên dự án" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-01" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCPROJECT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-02 — IfcBuilding phải có Tên công trình" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-02" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDING</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-03 — IfcSite phải có Tên địa điểm" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-03" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSITE</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-PRJ-04 — Tầng (IfcBuildingStorey) phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-PRJ-04" instructions="Yêu cầu áp dụng từ giai đoạn TKCS (bộ môn ALL).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-MEP-01 — Ống (PipeSegment) phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-MEP-01" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn MEP).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCPIPESEGMENT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="EIR-MEP-02 — Ống gió (DuctSegment) phải có Tên" ifcVersion="IFC2X3 IFC4" identifier="EIR-MEP-02" instructions="Yêu cầu áp dụng từ giai đoạn TKKT (bộ môn MEP).">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDUCTSEGMENT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

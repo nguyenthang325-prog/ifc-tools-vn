@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ifc-tools-vn"
+version = "0.1.0"
+description = "Kiểm tra mô hình IFC theo cách làm Việt Nam: IDS (độ phủ), LOD, bóc khối lượng — dùng qua dòng lệnh hoặc MCP"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Nguyễn Đắc Thắng" }]
+dependencies = [
+    "ifcopenshell>=0.8",
+    "ifctester>=0.8",
+    "openpyxl>=3.1",
+    "numpy",
+    "mcp>=1.0,<2",
+]
+
+[project.scripts]
+ifc-tools-vn = "ifc_tools_vn.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

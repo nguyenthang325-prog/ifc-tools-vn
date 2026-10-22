@@ -1,0 +1,10 @@
+__pycache__/
+*.egg-info/
+.venv/
+build/
+dist/
+ifc_tools_output/
+*.ifc
+*.xlsx
+*.bcf
+.blocklist.local
