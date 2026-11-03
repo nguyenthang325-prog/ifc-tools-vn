@@ -209,8 +209,9 @@ def read_lod(path: Path) -> dict:
 
 def read_qto(path: Path) -> list:
     """
-    Trả về list {group, prop, unit, total, n} từ sheet "Tom_Tat_BoQ".
-    Row1=title, row2=note, row3=headers, row4+=data
+    Trả về list {group, prop, unit, total, n, co} từ sheet "Tom_Tat_BoQ".
+    Row1=title, row2=note, row3=headers, row4+=data. Từ ifc_qto 0.2.0 mỗi nhóm có thể có nhiều
+    dòng (theo đại lượng/ĐVT) và cột 7 "Nguồn / cờ"; co = True khi cột 7 có cảnh báo (⚠).
     """
     items = []
     try:
@@ -233,6 +234,7 @@ def read_qto(path: Path) -> list:
                 "unit":  row[3] or "",
                 "total": total_kl,
                 "n":     int(row[5] or 0),
+                "co":    len(row) > 6 and "⚠" in str(row[6] or ""),
             })
 
     wb.close()
@@ -326,8 +328,8 @@ def _sheet_tong_hop(wb, ids: dict, lod: dict, qto: list,
     _section_hdr("3. KHỐI LƯỢNG CHÍNH (IFC QTO — BaseQuantities)")
     if qto:
         ws.merge_cells(f"A{row}:D{row}")
-        _c(ws, row, 1, "⚠ Đơn vị theo project units trong IFC (Revit SI → m / m² / m³). "
-           "Kiểm tra lại nếu file dùng mm hoặc imperial.",
+        _c(ws, row, 1, "⚠ Diện tích/thể tích theo m² / m³; chiều dài theo đơn vị dài của project (Revit thường mm). "
+           "Dòng có ⚠: KL có cờ (Gross/Net lệch, vế thang thiếu thể tích...) — xem sheet KL_Chinh của file IFC_QTO.",
            font=Font(italic=True, color="C00000", size=9), align=_left)
         ws.row_dimensions[row].height = 18
         row += 1
@@ -338,12 +340,12 @@ def _sheet_tong_hop(wb, ids: dict, lod: dict, qto: list,
         ws.row_dimensions[row].height = 20
         row += 1
 
-        for item in qto[:12]:
+        for item in qto:   # in ĐỦ mọi dòng: cắt bớt từng làm mất nhóm Tường khi 1 nhóm có nhiều dòng
             total_str = (f"{item['total']:,.2f} {item['unit']}"
                          if item["total"] is not None else "—")
-            _c(ws, row, 1, "", fill=_NA_FILL)
+            _c(ws, row, 1, "⚠" if item.get("co") else "", fill=_NA_FILL)
             _c(ws, row, 2, item["group"], font=_N_FONT, align=_left)
-            _c(ws, row, 3, item["prop"],  font=_S_FONT, align=_left)
+            _c(ws, row, 3, item["prop"] + (" — có cờ" if item.get("co") else ""), font=_S_FONT, align=_left)
             _c(ws, row, 4, total_str,     font=_B_FONT)
             ws.row_dimensions[row].height = 18
             row += 1
@@ -600,7 +602,7 @@ def main():
               + "  → xem sheet DoPhu_CanhBao")
     print(f"  LOD : {lod_pct}% đạt LOD {lod_data.get('required','—')}, "
           f"{lod_data.get('fail',0)} không đạt")
-    print(f"  QTO : {len(qto_data)} nhóm khối lượng")
+    print(f"  QTO : {len(qto_data)} dòng khối lượng ({len({q['group'] for q in qto_data})} nhóm)")
     print(f"\n  {'✅ ĐẠT — mô hình sẵn sàng nộp hồ sơ' if all_ok else '❌ CHƯA ĐẠT — xem sheet Loi_Uu_Tien'}")
     print(f"  Output: {out_path}")
     print(f"  Sheets: Tong_Hop | Loi_Uu_Tien")

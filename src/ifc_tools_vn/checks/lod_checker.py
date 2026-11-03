@@ -95,9 +95,12 @@ DISC_TYPES = {
 }
 ALL_TYPES = list({t for types in DISC_TYPES.values() for t in types})
 
+# Tên nhóm theo cấu kiện cha — dùng chung với ifc_qto để báo cáo gọi cùng 1 tên
+from ifc_tools_vn.checks import qto_chon  # noqa: E402
+
 TYPE_GROUP = {
     "IfcWall": "Tường", "IfcWallStandardCase": "Tường",
-    "IfcSlab": "Sàn/Mái", "IfcRoof": "Sàn/Mái",
+    "IfcSlab": "Sàn", "IfcRoof": "Mái",   # tấm con của mái → Mái, chiếu nghỉ → Cầu thang: qto_chon.nhom_theo_cha
     "IfcBeam": "Dầm", "IfcColumn": "Cột",
     "IfcDoor": "Cửa", "IfcWindow": "Cửa sổ",
     "IfcStair": "Cầu thang", "IfcRailing": "Lan can", "IfcRamp": "Dốc",
@@ -280,7 +283,7 @@ def audit_ifc(ifc_path: Path, discipline: str, stage: str) -> list:
             records.append({
                 "name":     (el.Name or "").strip() or "—",
                 "type":     ifc_type,
-                "group":    TYPE_GROUP.get(ifc_type, ifc_type),
+                "group":    qto_chon.nhom_theo_cha(el, TYPE_GROUP.get(ifc_type, ifc_type)),
                 "storey":   get_storey(el),
                 "required": required,
                 "achieved": achieved,

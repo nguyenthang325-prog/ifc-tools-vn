@@ -20,6 +20,8 @@ Thay đổi đầu ra:
 - `Chi_Tiet` thêm cột "Nhóm theo cha". `Tong_Hop` ghi rõ là số thô, không dùng làm BoQ.
 - Tuỳ chọn mới `--khong-kiem-hinh-hoc`: bỏ bước đo hình học, để chạy nhanh với file rất lớn. File 15 tầng (16 MB) mất khoảng 35 s thay vì 8 s.
 - Duplex: `Tổng elements` từ 216 lên 218 (2 vế thang).
+- `audit_summary_report` (`tong_hop_audit`): in đủ mọi dòng khối lượng. Bản cũ chỉ in 12 dòng đầu, nên khi một nhóm có nhiều dòng thì mất các nhóm cuối bảng, có cả Tường. Dòng có cờ được đánh ⚠. Ghi chú đơn vị sửa lại: chiều dài theo đơn vị dài của project (Revit thường mm).
+- `lod_checker`: tên nhóm theo cấu kiện cha, giống `ifc_qto` (Sàn / Mái / Cầu thang thay cho "Sàn/Mái").
 - Module mới `checks/qto_chon.py`, kèm test `tests/test_qto_chon.py` dựng IFC trong bộ nhớ (chạy trên CI, không cần file mẫu).
 
 ## 0.1.0 — 2026-10-22
