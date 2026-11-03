@@ -37,18 +37,22 @@ except ImportError:
 
 from ifc_tools_vn.config import BASE, KET_QUA_DIR, OUTPUT_DIR  # đường dẫn: xem config.py
 
+# Chọn KL chính từng cấu kiện (Gross/Net, nhóm theo cấu kiện cha, cửa W×H) — xem qto_chon.py
+from ifc_tools_vn.checks import qto_chon  # noqa: E402
+
 # ── Element types theo discipline ─────────────────────────────────────────────
 
 DISC_TYPES = {
     "KT": [
         "IfcWall", "IfcWallStandardCase", "IfcSlab", "IfcRoof",
-        "IfcDoor", "IfcWindow", "IfcStair", "IfcRailing", "IfcRamp",
+        "IfcDoor", "IfcWindow", "IfcStair", "IfcStairFlight", "IfcRailing", "IfcRamp",
         "IfcCovering", "IfcFurnishingElement",
     ],
     "KC": [
         "IfcBeam", "IfcColumn", "IfcSlab",
         "IfcPlate", "IfcMember", "IfcFooting",
         "IfcWall", "IfcWallStandardCase",
+        "IfcStair", "IfcStairFlight",
     ],
     "MEP": [
         "IfcPipeSegment", "IfcPipeFitting",
@@ -62,10 +66,10 @@ DISC_TYPES = {
 
 TYPE_GROUP_VN = {
     "IfcWall": "Tường", "IfcWallStandardCase": "Tường",
-    "IfcSlab": "Sàn/Mái", "IfcRoof": "Mái",
+    "IfcSlab": "Sàn", "IfcRoof": "Mái",   # tấm con của mái → Mái, chiếu nghỉ → Cầu thang (qto_chon.nhom_theo_cha)
     "IfcBeam": "Dầm", "IfcColumn": "Cột",
     "IfcDoor": "Cửa", "IfcWindow": "Cửa sổ",
-    "IfcStair": "Cầu thang", "IfcRailing": "Lan can", "IfcRamp": "Dốc",
+    "IfcStair": "Cầu thang", "IfcStairFlight": "Cầu thang", "IfcRailing": "Lan can", "IfcRamp": "Dốc",
     "IfcPlate": "Tấm KC", "IfcMember": "Thanh KC", "IfcFooting": "Móng",
     "IfcPipeSegment": "Ống nước", "IfcPipeFitting": "Phụ kiện ống nước",
     "IfcDuctSegment": "Ống gió", "IfcDuctFitting": "Phụ kiện ống gió",
@@ -91,7 +95,8 @@ UNIT_HINT = {
     "quantity": "cái",
 }
 
-# Đại lượng ưu tiên khi chọn KL chính cho Tom_Tat_BoQ (số nhỏ = ưu tiên cao)
+# Đại lượng ưu tiên (Volume > Area > Length). Tom_Tat_BoQ KHÔNG còn dùng bảng này để chọn
+# (hoà điểm Gross/Net → lỗi L2) mà dùng qto_chon.chon_kl cho từng cấu kiện.
 _PRIMARY_SCORE = {
     "grossvolume": 1, "netvolume": 1, "volume": 1,
     "netsidearea": 2, "grosssidearea": 2, "netarea": 2, "grossarea": 2, "area": 2,
@@ -316,6 +321,7 @@ def _extract_qtos(ifc_file, discipline: str) -> list:
             name   = (el.Name or "").strip() or "—"
             storey = _storey(el)
             group  = TYPE_GROUP_VN.get(ifc_type, ifc_type)
+            group_cha = qto_chon.nhom_theo_cha(el, group)
             guid   = el.GlobalId or ""
 
             # Lấy tất cả Psets rồi lọc BaseQuantities (Qto_*)
@@ -328,7 +334,7 @@ def _extract_qtos(ifc_file, discipline: str) -> list:
 
             if not qtos:
                 records.append({
-                    "ifc_type": ifc_type, "group": group, "name": name,
+                    "ifc_type": ifc_type, "group": group, "group_cha": group_cha, "name": name,
                     "storey": storey, "guid": guid,
                     "pset": "—", "prop": "—", "value": None, "unit": "—",
                     "note": "Không có BaseQuantities",
@@ -344,7 +350,7 @@ def _extract_qtos(ifc_file, discipline: str) -> list:
                     except (TypeError, ValueError):
                         continue
                     records.append({
-                        "ifc_type": ifc_type, "group": group, "name": name,
+                        "ifc_type": ifc_type, "group": group, "group_cha": group_cha, "name": name,
                         "storey": storey, "guid": guid,
                         "pset": pset_name, "prop": prop,
                         "value": round(num_val, 4),
@@ -352,6 +358,30 @@ def _extract_qtos(ifc_file, discipline: str) -> list:
                         "note": "",
                     })
     return records
+
+
+def _chon_kl_cau_kien(ifc_file, discipline: str, kiem_hinh_hoc: bool = True) -> list:
+    """Mỗi cấu kiện → đúng 1 KL chính (+ KL phụ) theo qto_chon.chon_kl.
+    Đây là số Tom_Tat_BoQ cộng — cùng hàm với model_payment / payment_from_model (sửa L1–L6)."""
+    disc = discipline.upper()
+    if disc == "ALL":
+        target_types = list({t for types in DISC_TYPES.values() for t in types})
+    else:
+        target_types = DISC_TYPES.get(disc, [])
+    bc = qto_chon.BoiCanh(ifc_file, kiem_hinh_hoc=kiem_hinh_hoc)
+    length_unit = _length_unit_symbol(ifc_file)
+    out = []
+    for ifc_type in sorted(target_types):
+        try:
+            elements = ifc_file.by_type(ifc_type, include_subtypes=False)
+        except Exception:
+            continue
+        for el in elements:
+            kq = qto_chon.chon_kl(el, bc, TYPE_GROUP_VN.get(ifc_type, ifc_type), dvt_dai=length_unit)
+            kq.update(ifc_type=ifc_type, guid=el.GlobalId or "", name=(el.Name or "").strip() or "—",
+                      storey=_storey(el))
+            out.append(kq)
+    return out
 
 
 # ── Bổ sung BaseQuantities từ hình học (--bo-sung-qto) ────────────────────────
@@ -367,12 +397,7 @@ _QTO_OPENING_TYPES = {"IfcDoor", "IfcWindow"}
 _QTO_METHOD = "Đo từ hình học IFC (ifc_qto.py --bo-sung-qto)"
 
 
-def _mesh_closed(verts, faces) -> bool:
-    """Lưới kín = mọi cạnh tam giác dùng chung đúng 2 mặt. Lưới hở thì thể tích vô nghĩa."""
-    import numpy as np
-    e = np.sort(np.concatenate([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]]), axis=1)
-    _, cnt = np.unique(e, axis=0, return_counts=True)
-    return bool((cnt == 2).all())
+_mesh_closed = qto_chon.luoi_kin   # lưới kín = mọi cạnh tam giác dùng chung đúng 2 mặt
 
 
 def _bo_sung_qto(ifc_file, discipline: str) -> dict:
@@ -476,18 +501,18 @@ def _sheet_chi_tiet(wb, records, ifc_path, discipline, stage, project):
     ws = wb.active
     ws.title = "Chi_Tiet"
     headers = ["STT", "Nhóm", "IFC Type", "Tên Element",
-               "Tầng", "Pset QTO", "Đại lượng", "Giá trị", "ĐVT", "Ghi chú"]
-    _col_widths(ws, [5, 16, 24, 36, 14, 32, 28, 12, 8, 30])
+               "Tầng", "Pset QTO", "Đại lượng", "Giá trị", "ĐVT", "Ghi chú", "Nhóm theo cha"]
+    _col_widths(ws, [5, 16, 24, 36, 14, 32, 28, 12, 8, 30, 16])
 
     total_el = len({r["guid"] for r in records if r["guid"]})
     total_q  = sum(1 for r in records if r["value"] is not None)
 
-    ws.merge_cells("A1:J1")
+    ws.merge_cells("A1:K1")
     c = ws.cell(1, 1, f"BÓC KHỐI LƯỢNG IFC — {project.upper()} | {discipline} | {stage}  |  {date.today().strftime('%d/%m/%Y')}")
     c.fill = _H_FILL; c.font = Font(bold=True, color="FFFFFF", size=13)
     c.alignment = _center; c.border = _border; ws.row_dimensions[1].height = 32
 
-    ws.merge_cells("A2:J2")
+    ws.merge_cells("A2:K2")
     c2 = ws.cell(2, 1, f"File: {ifc_path.name}  |  {total_el} elements  |  {total_q} giá trị số")
     c2.font = Font(italic=True, size=9); c2.alignment = _center
 
@@ -509,6 +534,7 @@ def _sheet_chi_tiet(wb, records, ifc_path, discipline, stage, project):
         _c(ws, i+3, 8,  r["value"],     font=_B_FONT if r["value"] else _N_FONT)
         _c(ws, i+3, 9,  r["unit"],      font=_N_FONT)
         _c(ws, i+3, 10, r["note"],      font=_S_FONT, align=_left, fill=no_qto_fill)
+        _c(ws, i+3, 11, r.get("group_cha", r["group"]), font=_N_FONT, align=_left)
 
 
 def _sheet_tong_hop(wb, records, discipline, project):
@@ -518,7 +544,8 @@ def _sheet_tong_hop(wb, records, discipline, project):
     _col_widths(ws, [5, 18, 30, 8, 12, 14, 14, 12, 12])
 
     ws.merge_cells("A1:I1")
-    t = ws.cell(1, 1, f"TỔNG HỢP KHỐI LƯỢNG — {project.upper()} | {discipline}")
+    t = ws.cell(1, 1, f"TỔNG HỢP SỐ THÔ — {project.upper()} | {discipline}  "
+                      "(cộng mọi đại lượng Qto, Gross và Net riêng — KHÔNG dùng làm BoQ, xem Tom_Tat_BoQ)")
     t.fill = _H_FILL; t.font = Font(bold=True, color="FFFFFF", size=13)
     t.alignment = _center; t.border = _border; ws.row_dimensions[1].height = 30
 
@@ -526,11 +553,11 @@ def _sheet_tong_hop(wb, records, discipline, project):
         _c(ws, 2, j, h, fill=_S_FILL, font=_H_FONT)
     ws.freeze_panes = "A3"
 
-    # Nhóm theo (nhóm, prop, unit)
+    # Nhóm theo (nhóm theo cha, prop, unit) — số thô, chưa chọn Gross/Net
     summary = defaultdict(lambda: {"values": [], "guids": set()})
     for r in records:
         if r["value"] is not None:
-            key = (r["group"], r["prop"], r["unit"])
+            key = (r.get("group_cha", r["group"]), r["prop"], r["unit"])
             summary[key]["values"].append(r["value"])
             summary[key]["guids"].add(r["guid"])
 
@@ -553,46 +580,99 @@ def _sheet_tong_hop(wb, records, discipline, project):
     return summary
 
 
-def _sheet_tom_tat_boq(wb, summary, discipline, stage, project):
-    ws = wb.create_sheet("Tom_Tat_BoQ")
-    _col_widths(ws, [5, 22, 30, 8, 14, 14])
+def _tong_hop_kl_chinh(chon: list) -> list:
+    """Cộng KL chính + phụ của từng cấu kiện theo (nhóm theo cha, đại lượng, đơn vị).
+    Trả về list dòng {group, label, unit, total, n, co_gia_tri, nguon: {nguồn: số}, co: {cờ: số}}."""
+    rows = {}
 
-    ws.merge_cells("A1:F1")
+    def _dong(k):
+        if k not in rows:
+            rows[k] = {"group": k[0], "label": k[1], "unit": k[2], "total": 0.0, "n": 0,
+                       "co_gia_tri": False, "nguon": defaultdict(int), "co": defaultdict(int)}
+        return rows[k]
+
+    for kq in chon:
+        for kl in ([kq["chinh"]] if kq["chinh"] else []) + kq["phu"]:
+            d = _dong((kq["nhom"], kl.nhan, kl.dvt))
+            d["total"] += kl.gia_tri; d["n"] += 1; d["co_gia_tri"] = True
+            if kl is kq["chinh"]:
+                d["nguon"][kl.nguon] += 1
+        if kq["co"]:
+            # Cờ gắn vào dòng KL chính; cấu kiện không có KL (vế thang IFC2X3) → dòng thể tích của nhóm
+            k = ((kq["nhom"], kq["chinh"].nhan, kq["chinh"].dvt) if kq["chinh"]
+                 else (kq["nhom"], "Thể tích", "m³"))
+            for c in kq["co"]:
+                _dong(k)["co"][c] += 1
+    return [rows[k] for k in sorted(rows)]
+
+
+def _sheet_tom_tat_boq(wb, chon, discipline, stage, project):
+    ws = wb.create_sheet("Tom_Tat_BoQ")
+    _col_widths(ws, [5, 16, 26, 8, 14, 11, 70])
+
+    ws.merge_cells("A1:G1")
     t = ws.cell(1, 1, f"TÓM TẮT KL THEO NHÓM — {project.upper()} | {discipline} | {stage}")
     t.fill = _H_FILL; t.font = Font(bold=True, color="FFFFFF", size=13)
     t.alignment = _center; t.border = _border; ws.row_dimensions[1].height = 30
 
-    ws.merge_cells("A2:F2")
+    ws.merge_cells("A2:G2")
     n = ws.cell(2, 1,
-        "ℹ Đơn vị dài (Length/Width/Height) đọc tự động từ project unit của IFC "
-        "(Revit thường mm); Area/Volume theo m²/m³. Cốt thép quy đổi kg (7850 kg/m³).")
+        "ℹ Mỗi cấu kiện lấy đúng 1 KL chính rồi mới cộng. Thể tích: Gross ≈ Net → Net; lệch → trọng tài "
+        "hình học (xem cột G và sheet KL_Chinh). Nhóm theo cấu kiện cha: tấm con của mái → Mái, chiếu nghỉ "
+        "+ vế thang → Cầu thang. Cửa: W × H, không dùng Area. Đơn vị dài theo project unit của IFC (Revit thường mm).")
     n.font = Font(italic=True, color="C00000", size=9); n.alignment = _left
+    ws.row_dimensions[2].height = 40
 
-    for j, h in enumerate(["STT", "Nhóm", "Đại lượng chính", "ĐVT", "Tổng KL", "Số element"], 1):
+    # 6 cột đầu giữ nguyên vị trí (audit_summary_report.read_qto đọc theo vị trí cột)
+    for j, h in enumerate(["STT", "Nhóm", "Đại lượng chính", "ĐVT", "Tổng KL", "Số element",
+                           "Nguồn / cờ"], 1):
         _c(ws, 3, j, h, fill=_S_FILL, font=_H_FONT)
     ws.freeze_panes = "A4"
 
-    # Chọn 1 đại lượng đại diện mỗi nhóm: Volume > Area > Length
-    best: dict = {}
-    for (grp, prop, unit), data in summary.items():
-        score = _priority(prop)
-        vals  = data["values"]
-        if grp not in best or score < best[grp]["score"]:
-            best[grp] = {
-                "prop": prop, "unit": unit,
-                "total": round(sum(vals), 3),
-                "n": len(data["guids"]),
-                "score": score,
-            }
-
-    for stt, (grp, info) in enumerate(sorted(best.items()), 1):
+    for stt, d in enumerate(_tong_hop_kl_chinh(chon), 1):
         alt = _ALT if stt % 2 == 0 else PatternFill()
+        nguon = ", ".join(f"{k} {v}" for k, v in sorted(d["nguon"].items()))
+        co = " · ".join(f"⚠ {k}: {v}" for k, v in sorted(d["co"].items()))
+        ghi = " · ".join(x for x in (nguon, co) if x)
         _c(ws, stt+3, 1, stt,            font=_N_FONT)
-        _c(ws, stt+3, 2, grp,            font=_B_FONT, align=_left, fill=alt)
-        _c(ws, stt+3, 3, info["prop"],   font=_N_FONT, align=_left)
-        _c(ws, stt+3, 4, info["unit"],   font=_N_FONT)
-        _c(ws, stt+3, 5, info["total"],  font=Font(bold=True, size=11))
-        _c(ws, stt+3, 6, info["n"],      font=_N_FONT)
+        _c(ws, stt+3, 2, d["group"],     font=_B_FONT, align=_left, fill=alt)
+        _c(ws, stt+3, 3, d["label"],     font=_N_FONT, align=_left)
+        _c(ws, stt+3, 4, d["unit"],      font=_N_FONT)
+        _c(ws, stt+3, 5, round(d["total"], 3) if d["co_gia_tri"] else None, font=Font(bold=True, size=11))
+        _c(ws, stt+3, 6, d["n"],         font=_N_FONT)
+        _c(ws, stt+3, 7, ghi,            font=_S_FONT, align=_left, fill=_W_FILL if co else PatternFill())
+
+
+def _sheet_kl_chinh(wb, chon, project):
+    """Từng cấu kiện: KL chính đã chọn + nguồn + cờ — để tra ngược cấu kiện bị gắn cờ."""
+    ws = wb.create_sheet("KL_Chinh")
+    headers = ["STT", "Nhóm", "IFC Type", "Tên Element", "Tầng", "GUID",
+               "KL chính", "ĐVT", "Đại lượng", "Nguồn", "Cờ"]
+    _col_widths(ws, [6, 12, 18, 36, 14, 24, 12, 7, 22, 26, 50])
+    ws.merge_cells("A1:K1")
+    t = ws.cell(1, 1, f"KL CHÍNH TỪNG CẤU KIỆN — {project.upper()} "
+                      "(số mà Tom_Tat_BoQ và 2 script thanh toán cùng cộng; cấu kiện có cờ xếp đầu)")
+    t.fill = _H_FILL; t.font = Font(bold=True, color="FFFFFF", size=12)
+    t.alignment = _center; t.border = _border; ws.row_dimensions[1].height = 28
+    for j, h in enumerate(headers, 1):
+        _c(ws, 2, j, h, fill=_S_FILL, font=_H_FONT)
+    ws.freeze_panes = "A3"
+    chon = sorted(chon, key=lambda k: (not k["co"], k["nhom"], k["ifc_type"], k["storey"], k["name"]))
+    for i, k in enumerate(chon, 1):
+        kl = k["chinh"]
+        co = "; ".join(k["co"])
+        _c(ws, i+2, 1, i,                             font=_S_FONT)
+        _c(ws, i+2, 2, k["nhom"],                     font=_N_FONT, align=_left)
+        _c(ws, i+2, 3, k["ifc_type"],                 font=_S_FONT, align=_left)
+        _c(ws, i+2, 4, k["name"],                     font=_N_FONT, align=_left)
+        _c(ws, i+2, 5, k["storey"],                   font=_N_FONT)
+        _c(ws, i+2, 6, k["guid"],                     font=_S_FONT, align=_left)
+        _c(ws, i+2, 7, kl.gia_tri if kl else None,    font=_B_FONT)
+        _c(ws, i+2, 8, kl.dvt if kl else "—",         font=_N_FONT)
+        _c(ws, i+2, 9, kl.nhan if kl else "—",        font=_S_FONT, align=_left)
+        _c(ws, i+2, 10, kl.nguon if kl else "—",      font=_S_FONT, align=_left)
+        _c(ws, i+2, 11, co,                           font=_S_FONT, align=_left,
+           fill=_W_FILL if co else PatternFill())
 
 
 def _sheet_cot_thep(wb, rebar_records, project):
@@ -639,11 +719,12 @@ def _sheet_cot_thep(wb, rebar_records, project):
         _c(ws, i+3, 9, r["note"],     font=_S_FONT, align=_left, fill=no_data)
 
 
-def export_excel(records, rebar_records, ifc_path, discipline, stage, project, out_path):
+def export_excel(records, rebar_records, ifc_path, discipline, stage, project, out_path, chon=None):
     wb = openpyxl.Workbook()
     _sheet_chi_tiet(wb, records, ifc_path, discipline, stage, project)
-    summary = _sheet_tong_hop(wb, records, discipline, project)
-    _sheet_tom_tat_boq(wb, summary, discipline, stage, project)
+    _sheet_tong_hop(wb, records, discipline, project)
+    _sheet_tom_tat_boq(wb, chon or [], discipline, stage, project)
+    _sheet_kl_chinh(wb, chon or [], project)
     if rebar_records is not None:
         _sheet_cot_thep(wb, rebar_records, project)
     wb.save(str(out_path))
@@ -667,6 +748,9 @@ def main():
     parser.add_argument("--bo-sung-qto", action="store_true",
                         help="IFC thiếu BaseQuantities: đo từ hình học, ghi bản sao "
                              "<tên>_BoSungQTO.ifc vào thư mục kết quả rồi bóc KL trên bản đó")
+    parser.add_argument("--khong-kiem-hinh-hoc", action="store_true",
+                        help="Bỏ bước đo hình học khi GrossVolume ≠ NetVolume (chạy nhanh với file rất lớn); "
+                             "khi đó lấy Net và gắn cờ 'chưa kiểm'")
     args = parser.parse_args()
 
     ifc_path = Path(args.ifc)
@@ -714,6 +798,11 @@ def main():
     total_q  = sum(1 for r in records if r["value"] is not None)
     no_qto   = sum(1 for r in records if r["note"] == "Không có BaseQuantities")
 
+    print("  Đang chọn KL chính từng cấu kiện" +
+          (" (đã tắt kiểm hình học)..." if args.khong_kiem_hinh_hoc else " (kiểm hình học khi Gross ≠ Net)..."))
+    chon = _chon_kl_cau_kien(ifc_file, args.discipline, kiem_hinh_hoc=not args.khong_kiem_hinh_hoc)
+    n_co = sum(1 for k in chon if k["co"])
+
     # Cốt thép — chỉ chạy với KC hoặc ALL
     disc_upper = args.discipline.upper()
     rebar_records = None
@@ -734,6 +823,7 @@ def main():
     print(f"    Có BaseQuantities : {total_el - no_qto}")
     print(f"    Không có Qto      : {no_qto}")
     print(f"    Số giá trị số     : {total_q}")
+    print(f"    Cấu kiện gắn cờ   : {n_co} (xem cột G Tom_Tat_BoQ / sheet KL_Chinh)")
 
     if no_qto == total_el:
         print("\n  ⚠  Toàn bộ elements không có BaseQuantities.")
@@ -745,9 +835,9 @@ def main():
     out_path = OUTPUT_DIR / f"IFC_QTO_{slug}_{args.discipline}_{date.today().strftime('%Y%m%d')}.xlsx"
 
     print("\n  Đang xuất báo cáo...")
-    export_excel(records, rebar_records, ifc_path, args.discipline, args.stage, project, out_path)
+    export_excel(records, rebar_records, ifc_path, args.discipline, args.stage, project, out_path, chon)
 
-    sheets = "Chi_Tiet | Tong_Hop | Tom_Tat_BoQ"
+    sheets = "Chi_Tiet | Tong_Hop | Tom_Tat_BoQ | KL_Chinh"
     if rebar_records is not None:
         sheets += " | Cot_Thep"
     print(f"\n  ✅ Hoàn thành! Kết quả tại: {out_path}")

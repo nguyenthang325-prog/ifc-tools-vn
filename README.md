@@ -18,7 +18,7 @@ Ví dụ trên mô hình mẫu Duplex: 8/10 yêu cầu đạt, nhưng độ ph�
 |---|---|---|---|
 | `kiem_tra_ids` | `eir_to_ids` → `ids_run` | Sinh file `.ids` theo bộ môn + giai đoạn, chấm mô hình, đo độ phủ | `IDS_KetQua_*.xlsx`, `.html` (báo cáo gốc của ifctester), `.bcf` |
 | `kiem_tra_lod` | `lod_checker` | LOD 100–500 từng cấu kiện theo giai đoạn | `LOD_Audit_*.xlsx` |
-| `boc_khoi_luong` | `ifc_qto` | Bóc khối lượng từ BaseQuantities; tuỳ chọn đo từ hình học khi IFC không có | `IFC_QTO_*.xlsx` (+ `<tên>_BoSungQTO.ifc`) |
+| `boc_khoi_luong` | `ifc_qto` | Bóc khối lượng từ BaseQuantities. Mỗi cấu kiện lấy 1 khối lượng chính; Gross ≠ Net thì đối chiếu thể tích hình học. Tuỳ chọn đo từ hình học khi IFC không có | `IFC_QTO_*.xlsx` (+ `<tên>_BoSungQTO.ifc`) |
 | `tong_hop_audit` | `audit_summary_report` | Gộp 3 kết quả trên thành 1 bảng gửi trưởng bộ môn | `AuditSummary_*.xlsx` |
 | `kiem_tra_toan_dien` | `bim_audit_pipeline` | Chạy IDS → LOD → QTO trong 1 lệnh | `BIM_HealthDashboard_*.xlsx` |
 
@@ -82,7 +82,7 @@ Tải mô hình Duplex của buildingSMART (CC BY 4.0): [Duplex_A_20110907.ifc](
 |---|---|
 | IDS (KT, TKTC) | 8/10 yêu cầu đạt · độ phủ 101/245 · 58 cấu kiện trượt (57 tường thiếu FireRating + công trình thiếu tên) |
 | LOD (KT, TKTC) | 197 cấu kiện, 0% đạt LOD 350 (104 thiếu vật liệu, 90 thiếu FireRating, 3 không có hình học) |
-| Khối lượng `--bo-sung-qto` | 216 cấu kiện |
+| Khối lượng `--bo-sung-qto` | 218 cấu kiện (Sàn 64,583 m³ · Mái 60,747 m³ · Cầu thang 0,417 m³) |
 
 Kiểm tự động: `DUPLEX_PATH=<đường dẫn file> python -m unittest discover tests -v` (cần bản clone repo).
 
@@ -90,7 +90,8 @@ Kiểm tự động: `DUPLEX_PATH=<đường dẫn file> python -m unittest disc
 
 - Đã chạy thử trên Windows 11 với Python 3.10 và 3.14, ifcopenshell 0.8.5 và 0.9.0. CI cấu hình chạy trên Windows và Ubuntu, Python 3.12.
 - Viết cho IFC2X3 xuất từ Revit. Định dạng khác vẫn chạy nhưng ít được thử.
-- `--bo-sung-qto` chưa đo được lan can, cầu thang gộp, nội thất, MEP. Thứ tự dòng trong bảng có thể đổi giữa các lần chạy (engine hình học chạy nhiều luồng); nội dung không đổi.
+- `--bo-sung-qto` chưa đo được lan can, cầu thang gộp, nội thất, MEP.
+- Bóc khối lượng: ngưỡng trọng tài (Gross ≈ Net 0,5 %, khớp hình học 2 %) mới thử trên 7 mô hình Revit. Cấu kiện có cờ (sheet `KL_Chinh`) cần kiểm lại trong Revit. IFC2X3 Revit không có thể tích vế thang. Thứ tự dòng trong bảng có thể đổi giữa các lần chạy (engine hình học chạy nhiều luồng); nội dung không đổi.
 - Điểm IDS cao **không** có nghĩa mô hình dùng được để thanh toán: IDS không kiểm phân loại đúng/sai hay hình học.
 - Chưa có công cụ báo cáo xung đột (Navisworks) — dự kiến bản sau.
 
