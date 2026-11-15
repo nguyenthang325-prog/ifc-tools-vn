@@ -152,28 +152,43 @@ def get_storey(element) -> str:
     return ""
 
 
+def _cau_kien_con(element) -> list:
+    """Cấu kiện con qua IfcRelAggregates (vd IfcStair → vế/chiếu nghỉ, IfcRoof → tấm mái)."""
+    return [o for rel in (getattr(element, "IsDecomposedBy", None) or [])
+            for o in rel.RelatedObjects]
+
+
+def _co_vat_lieu(element) -> bool:
+    """Vật liệu gán trên cấu kiện HOẶC kế thừa từ type (Revit thường gán IfcMaterialLayerSet ở type)."""
+    try:
+        return ifc_util.get_material(element, should_inherit=True) is not None
+    except Exception:
+        return any(assoc.is_a("IfcRelAssociatesMaterial")
+                   for assoc in (getattr(element, "HasAssociations", None) or []))
+
+
 def get_achieved_lod(element, discipline: str = "ALL") -> tuple:
     """Trả về (lod_đạt_được: int, lý_do_chưa_đạt_cao_hơn: list[str])."""
     missing = []
+    con = _cau_kien_con(element)
 
-    # LOD 200: cần geometry
-    has_geom = element.Representation is not None
+    # LOD 200: cần geometry. Cấu kiện cha (IfcStair, IfcRoof) không tự mang hình — hình nằm ở
+    # cấu kiện con → có con mang hình thì tính là có geometry (trước đây báo nhầm 100 % thang/mái).
+    has_geom = element.Representation is not None or any(o.Representation is not None for o in con)
     if not has_geom:
         missing.append("Thiếu geometry (Representation = None)")
         return 100, missing
     lod = 200
 
-    # LOD 300: cần Name + Material
+    # LOD 300: cần Name + Material. Vật liệu đọc cả ở type và ở cấu kiện con — chỉ đọc gán
+    # trực tiếp thì báo nhầm tường/sàn/móng Revit gán vật liệu ở type.
     name = (element.Name or "").strip()
     has_name = bool(name) and name.lower() not in ("unnamed", "")
-    has_material = any(
-        assoc.is_a("IfcRelAssociatesMaterial")
-        for assoc in (getattr(element, "HasAssociations", None) or [])
-    )
+    has_material = _co_vat_lieu(element) or any(_co_vat_lieu(o) for o in con)
     if not has_name:
         missing.append("Thiếu Name (Name rỗng hoặc 'Unnamed')")
     if not has_material:
-        missing.append("Thiếu vật liệu (chưa gán IfcRelAssociatesMaterial)")
+        missing.append("Thiếu vật liệu (không gán trên cấu kiện, type, hay cấu kiện con)")
     if has_name and has_material:
         lod = 300
     if lod < 300:

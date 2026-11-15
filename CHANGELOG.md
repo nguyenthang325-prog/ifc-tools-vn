@@ -1,5 +1,14 @@
 # Thay đổi
 
+## 0.2.1 — 2026-11-15
+
+Sửa `lod_checker` báo oan "thiếu vật liệu" và "thiếu geometry".
+
+- Vật liệu chỉ được đọc khi gán trực tiếp trên cấu kiện, trong khi Revit gán `IfcMaterialLayerSet` ở **type**. Trên một mô hình kết cấu Revit 787 cột/dầm/sàn/cọc/móng: 640 "có vật liệu" theo bản cũ, 787 theo IDS (ifctester). Nay đọc cả vật liệu ở type và ở cấu kiện con.
+- Cấu kiện cha (`IfcStair`, `IfcRoof`) không tự mang hình, hình nằm ở cấu kiện con (vế, tấm mái), nên bị xếp LOD 100 "thiếu geometry". Nay có cấu kiện con mang hình thì tính là có geometry.
+
+Số LOD đạt có thể tăng so với 0.2.0 trên IFC xuất từ Revit. IDS và QTO không đổi.
+
 ## 0.2.0 — 2026-11-03
 
 Sửa cách bóc khối lượng (`ifc_qto`). **Số trong `Tom_Tat_BoQ` sẽ đổi**, có nhóm đổi mạnh. Báo cáo QTO hoặc HealthDashboard đã xuất bằng 0.1.0 từ IFC Revit nên xuất lại.
